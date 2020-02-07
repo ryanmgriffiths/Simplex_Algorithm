@@ -5,10 +5,8 @@ class Simplex:
     def __init__(self):
         return None
 
-    def random(self,input):
-        return input[0]**2 + input[1]**2 - 10
-
     def f(self,input):
+        '''Rosenbrock function for testing, input is array like (x,y)'''
         return (1-input[0])**2 + 100*(input[1]-input[0]**2)**2
 
     def centroid(self,array):
@@ -32,7 +30,7 @@ class Simplex:
         return beta*phigh + (1-beta)*pbar
 
     def simplex(self, ALPHA, GAMMA, BETA, p0, THRESHOLD):
-        # Assert correct inputs
+        # Assert inputs
         assert(ALPHA > 0)
         assert(GAMMA > 1)
         assert(BETA > 0 and BETA < 1)
