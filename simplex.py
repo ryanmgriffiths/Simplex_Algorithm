@@ -66,68 +66,63 @@ class Simplex:
         ph = pi[int(numpy.where(yi==yh)[0])]
         pl = pi[int(numpy.where(yi==yl)[0])]
         itera = 0
+        n = len(pi[0])
+        std_error = 0 
+
+        while (yl>THRESHOLD or std_error==0):
+            p_not_h = [x for x in pi if (x!=ph).all()]
+            y_not_h = [x for x in yi if (x!=yh)]
+            pbar = self.centroid(p_not_h)
+            pstar = self.reflection(pbar,ph,ALPHA)        
+            ystar = f(pstar)
         
-        while (yl>THRESHOLD):
-            try:
-                p_not_h = [x for x in pi if (x!=ph).all()]
-                y_not_h = [x for x in yi if (x!=yh)]
-                pbar = self.centroid(p_not_h)
-                pstar = self.reflection(pbar,ph,ALPHA)        
-                ystar = f(pstar)
-            
-                if ystar < yl:
+            if ystar < yl:
+                
+                pstarstar = self.expansion(pbar, pstar, GAMMA)
+                ystarstar = f(pstarstar)
+                
+                if ystarstar < yl:
+                    pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstarstar
+                    yi[yi==yh] = ystarstar
+                else:
+                    pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
+                    yi[yi==yh] = ystar
+            else:
+                y_not_h.append(ystar)
+                if ystar == numpy.amax(numpy.array(y_not_h)):
+                    if ystar > yh:
+                        pass 
+                    else:
+                        pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
+                        yi[yi==yh] = ystar
                     
-                    pstarstar = self.expansion(pbar, pstar, GAMMA)
+                    yh = numpy.amax(yi)
+                    yl = numpy.amin(yi)
+                    ph = pi[int(numpy.where(yi==yh)[0])]
+                    pl = pi[int(numpy.where(yi==yl)[0])]
+                    
+                    pbar = self.centroid(p_not_h)
+                    pstarstar = self.contraction(pbar, ph ,BETA)
+                    
                     ystarstar = f(pstarstar)
                     
-                    if ystarstar < yl:
+                    if ystarstar > yh:            
+                        pi = [(x+pl)/2 for x in pi]
+                        yi = numpy.array([f(p) for p in pi])
+
+                    else:
                         pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstarstar
                         yi[yi==yh] = ystarstar
-                    else:
-                        pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
-                        yi[yi==yh] = ystar
+                
                 else:
-                    y_not_h.append(ystar)
-                    if ystar == numpy.amax(numpy.array(y_not_h)):
-                        if ystar > yh:
-                            pass 
-                        else:
-                            pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
-                            yi[yi==yh] = ystar
-                        
-                        yh = numpy.amax(yi)
-                        yl = numpy.amin(yi)
-                        ph = pi[int(numpy.where(yi==yh)[0])]
-                        pl = pi[int(numpy.where(yi==yl)[0])]
-                        
-                        pbar = self.centroid(p_not_h)
-                        pstarstar = self.contraction(pbar, ph ,BETA)
-                        
-                        ystarstar = f(pstarstar)
-                        
-                        if ystarstar > yh:            
-                            pi = [(x+pl)/2 for x in pi]
-                            yi = numpy.array([f(p) for p in pi])
+                    pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
+                    yi[yi==yh] = ystar
 
-                        else:
-                            pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstarstar
-                            yi[yi==yh] = ystarstar
-                    
-                    else:
-                        pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
-                        yi[yi==yh] = ystar
+            yh = numpy.amax(yi)
+            yl = numpy.amin(yi)
+            ph = pi[int(numpy.where(yi==yh)[0])]
+            pl = pi[int(numpy.where(yi==yl)[0])]
+            itera += 1 
+            std_error = numpy.sqrt(numpy.sum(yi - f(pbar))/len(pi[0]))
 
-                yh = numpy.amax(yi)
-                yl = numpy.amin(yi)
-                ph = pi[int(numpy.where(yi==yh)[0])]
-                pl = pi[int(numpy.where(yi==yl)[0])]
-                itera += 1 
-
-            except:
-                if itera <=1:
-                    raise ValueError("INCORRECT INITIAL VALUES GIVEN TO SIMPLEX")
-                else:
-                    print("SIMPLEX COMPLETE")
-                break
-        
         return (pl, itera)
