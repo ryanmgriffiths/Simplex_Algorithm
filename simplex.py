@@ -60,17 +60,17 @@ class Simplex:
         assert(len(P0) == len(P0[0])+1)
         
         pi = P0
-        yi = [f(p) for p in pi]
-        ph = pi[int(numpy.where(yi==numpy.amax(yi))[0])]
-        yh = f(ph)
-        pl = pi[int(numpy.where(yi==numpy.amin(yi))[0])]
-        yl = f(pl)
+        yi = numpy.array([f(p) for p in pi])
+        yh = numpy.amax(yi)
+        yl = numpy.amin(yi)
+        ph = pi[int(numpy.where(yi==yh)[0])]
+        pl = pi[int(numpy.where(yi==yl)[0])]
         itera = 0
         
         while (yl>THRESHOLD):
             try:
                 p_not_h = [x for x in pi if (x!=ph).all()]
-                y_not_h = [f(x) for x in p_not_h]
+                y_not_h = [x for x in yi if (x!=yh)]
                 pbar = self.centroid(p_not_h)
                 pstar = self.reflection(pbar,ph,ALPHA)        
                 ystar = f(pstar)
@@ -82,10 +82,10 @@ class Simplex:
                     
                     if ystarstar < yl:
                         pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstarstar
-                        yi = [f(p) for p in pi]
+                        yi[yi==yh] = ystarstar
                     else:
                         pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
-                        yi = [f(p) for p in pi]
+                        yi[yi==yh] = ystar
                 else:
                     y_not_h.append(ystar)
                     if ystar == numpy.amax(numpy.array(y_not_h)):
@@ -93,12 +93,13 @@ class Simplex:
                             pass 
                         else:
                             pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
-                            yi = [f(p) for p in pi]
+                            yi[yi==yh] = ystar
                         
-                        ph = pi[int(numpy.where(yi==numpy.amax(yi))[0])]
-                        pl = pi[int(numpy.where(yi==numpy.amin(yi))[0])]
-                        yh = f(ph)
-                        yl = f(pl)
+                        yh = numpy.amax(yi)
+                        yl = numpy.amin(yi)
+                        ph = pi[int(numpy.where(yi==yh)[0])]
+                        pl = pi[int(numpy.where(yi==yl)[0])]
+                        
                         pbar = self.centroid(p_not_h)
                         pstarstar = self.contraction(pbar, ph ,BETA)
                         
@@ -106,22 +107,22 @@ class Simplex:
                         
                         if ystarstar > yh:            
                             pi = [(x+pl)/2 for x in pi]
-                            yi = [f(p) for p in pi]
+                            yi = numpy.array([f(p) for p in pi])
 
                         else:
                             pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstarstar
-                            yi = [f(p) for p in pi]
+                            yi[yi==yh] = ystarstar
                     
                     else:
                         pi[[numpy.array_equal(ph,x) for x in pi].index(True)] = pstar
-                        yi = [f(p) for p in pi]
+                        yi[yi==yh] = ystar
 
-                ph = pi[int(numpy.where(yi==numpy.amax(yi))[0])]
-                yh = f(ph)
-                pl = pi[int(numpy.where(yi==numpy.amin(yi))[0])]
-                yl = f(pl)
+                yh = numpy.amax(yi)
+                yl = numpy.amin(yi)
+                ph = pi[int(numpy.where(yi==yh)[0])]
+                pl = pi[int(numpy.where(yi==yl)[0])]
                 itera += 1 
-        
+
             except:
                 if itera <=1:
                     raise ValueError("INCORRECT INITIAL VALUES GIVEN TO SIMPLEX")
